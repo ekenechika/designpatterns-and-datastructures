@@ -1,0 +1,88 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <memory>
+
+// Step 1: Write a class named Sample
+class Sample {
+private:
+    float value;
+
+public:
+    Sample(float val) : value(val) {}
+
+    float getValue() const {
+        return value;
+    }
+};
+
+// Step 2: Write a class named DataStore using the Strategy Pattern
+class StorageStrategy {
+public:
+    virtual void add(Sample sample) = 0;
+    virtual ~StorageStrategy() {}
+};
+
+// Binary Tree strategy
+class BinaryTreeStrategy : public StorageStrategy {
+private:
+    std::vector<Sample> binaryTree;
+
+public:
+    void add(Sample sample) override {
+        binaryTree.push_back(sample);
+        // Additional logic as needed
+    }
+};
+
+// Heap strategy
+class HeapStrategy : public StorageStrategy {
+private:
+    std::vector<Sample> heap;
+
+public:
+    void add(Sample sample) override {
+        heap.push_back(sample);
+        std::push_heap(heap.begin(), heap.end(), [](const Sample& a, const Sample& b) {
+            return a.getValue() < b.getValue();
+        });
+        // Additional logic as needed
+    }
+};
+
+class DataStore {
+private:
+    std::unique_ptr<StorageStrategy> strategy;
+
+public:
+    // Constructor with strategy injection
+    DataStore(std::unique_ptr<StorageStrategy> st) : strategy(std::move(st)) {}
+
+    // Setter for strategy (in case you want to change it later)
+    void setStrategy(std::unique_ptr<StorageStrategy> st) {
+        strategy = std::move(st);
+    }
+
+    // Method to add a Sample to the data structure using the chosen strategy
+    void addSample(const Sample& sample) {
+        strategy->add(sample);
+    }
+};
+
+int main() {
+    // Example usage
+    std::unique_ptr<StorageStrategy> binaryTreeStrategy = std::make_unique<BinaryTreeStrategy>();
+    std::unique_ptr<StorageStrategy> heapStrategy = std::make_unique<HeapStrategy>();
+
+    DataStore dataStore(std::move(binaryTreeStrategy));
+
+    Sample sample1(5.0);
+    Sample sample2(8.0);
+
+    dataStore.addSample(sample1);
+
+    dataStore.setStrategy(std::move(heapStrategy));
+    dataStore.addSample(sample2);
+
+    return 0;
+}
